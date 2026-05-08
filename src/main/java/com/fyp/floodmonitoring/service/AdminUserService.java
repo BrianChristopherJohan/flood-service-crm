@@ -1,5 +1,6 @@
 package com.fyp.floodmonitoring.service;
 
+import com.fyp.floodmonitoring.config.AdminInvariants;
 import com.fyp.floodmonitoring.dto.request.CreateAdminUserRequest;
 import com.fyp.floodmonitoring.dto.request.UpdateAdminUserRequest;
 import com.fyp.floodmonitoring.dto.response.AdminUserDto;
@@ -45,6 +46,10 @@ public class AdminUserService {
     @Transactional
     public AdminUserDto createUser(CreateAdminUserRequest req) {
         String email = req.email().toLowerCase().trim();
+        if (AdminInvariants.isProtectedDefaultAdmin(email)) {
+            throw AppException.conflict(
+                "The default admin account is reserved and cannot be re-created from the UI.");
+        }
         if (userRepository.existsByEmail(email)) {
             throw AppException.conflict("A user with this email already exists");
         }
@@ -81,7 +86,17 @@ public class AdminUserService {
             user.setLastName(req.lastName().trim());
         }
         if (req.role() != null && !req.role().isBlank()) {
-            user.setRole(Role.fromString(req.role()).getPersistenceValue());
+            String newRole = Role.fromString(req.role()).getPersistenceValue();
+            // Guard rail: the default admin's role is immutable. This
+            // protects against the lockout scenario where the only
+            // administrator demotes themselves and can no longer access
+            // /admin/* routes.
+            if (AdminInvariants.isProtectedDefaultAdmin(user.getEmail())
+                    && !"admin".equals(newRole)) {
+                throw AppException.forbidden(
+                    "The default admin account's role cannot be changed.");
+            }
+            user.setRole(newRole);
         }
 
         user = userRepository.save(user);
@@ -92,8 +107,10 @@ public class AdminUserService {
 
     @Transactional
     public void deleteUser(UUID id) {
-        if (!userRepository.existsById(id)) {
-            throw AppException.notFound("User not found");
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> AppException.notFound("User not found"));
+        if (AdminInvariants.isProtectedDefaultAdmin(user.getEmail())) {
+            throw AppException.forbidden("The default admin account cannot be deleted.");
         }
         refreshTokenRepository.deleteAllByUserId(id);
         settingRepository.deleteByUserId(id);
