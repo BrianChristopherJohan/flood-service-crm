@@ -44,7 +44,12 @@ public class User {
     @Column(name = "location_label", length = 255)
     private String locationLabel;
 
-    @Column(name = "avatar_url", length = 500)
+    /**
+     * Profile picture. Either a public URL (legacy) or a {@code data:image/...}
+     * URL produced by the in-app uploader (new). Stored as TEXT so a small
+     * base64-encoded JPEG (~50KB after client-side resize) fits comfortably.
+     */
+    @Column(name = "avatar_url", columnDefinition = "TEXT")
     private String avatarUrl;
 
     @Column(name = "last_login")

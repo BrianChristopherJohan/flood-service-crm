@@ -11,5 +11,8 @@ public record UpdateProfileRequest(
         @Size(max = 100) String lastName,
         @Size(max = 50)  String phone,
         @Size(max = 255) String locationLabel,
-        @Size(max = 2048) String avatarUrl   // optional — null means no change
+        // Accepts a public URL OR a `data:image/...;base64,...` URL produced by the
+        // in-app uploader (256x256 JPEG q=0.85 → roughly 60-80 KB after base64).
+        // The ceiling is generous so a slightly larger upload still fits.
+        @Size(max = 200_000) String avatarUrl
 ) {}
