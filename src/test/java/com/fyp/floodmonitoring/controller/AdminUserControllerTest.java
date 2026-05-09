@@ -148,7 +148,7 @@ class AdminUserControllerTest {
                 userId.toString(), "John Updated", "john@example.com",
                 "Admin", "active", "2024-02-01T00:00:00Z", "2025-01-01T09:00:00Z"
             );
-            when(adminUserService.updateUser(eq(userId), any())).thenReturn(updated);
+            when(adminUserService.updateUser(eq(userId), any(UUID.class), any())).thenReturn(updated);
 
             UpdateAdminUserRequest req = new UpdateAdminUserRequest("John", "Updated", "admin", null);
 
@@ -170,12 +170,12 @@ class AdminUserControllerTest {
         @DisplayName("returns 204 on successful delete")
         void deleteUser_Admin_Returns204() throws Exception {
             UUID userId = UUID.randomUUID();
-            doNothing().when(adminUserService).deleteUser(userId);
+            doNothing().when(adminUserService).deleteUser(eq(userId), any(UUID.class));
 
             mockMvc.perform(delete("/admin/users/" + userId).with(csrf()))
                 .andExpect(status().isNoContent());
 
-            verify(adminUserService).deleteUser(userId);
+            verify(adminUserService).deleteUser(eq(userId), any(UUID.class));
         }
 
         @Test

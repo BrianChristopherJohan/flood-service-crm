@@ -6,8 +6,10 @@ import com.fyp.floodmonitoring.dto.response.AdminUserDto;
 import com.fyp.floodmonitoring.service.AdminUserService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import com.fyp.floodmonitoring.exception.AppException;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -38,13 +40,25 @@ public class AdminUserController {
     @PatchMapping("/{id}")
     public ResponseEntity<AdminUserDto> updateUser(
             @PathVariable UUID id,
-            @Valid @RequestBody UpdateAdminUserRequest req) {
-        return ResponseEntity.ok(adminUserService.updateUser(id, req));
+            @Valid @RequestBody UpdateAdminUserRequest req,
+            Authentication auth) {
+        return ResponseEntity.ok(adminUserService.updateUser(id, requireUserId(auth), req));
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteUser(@PathVariable UUID id) {
-        adminUserService.deleteUser(id);
+    public ResponseEntity<Void> deleteUser(@PathVariable UUID id, Authentication auth) {
+        adminUserService.deleteUser(id, requireUserId(auth));
         return ResponseEntity.noContent().build();
+    }
+
+    private static UUID requireUserId(Authentication auth) {
+        if (auth == null || !auth.isAuthenticated()) {
+            throw AppException.unauthorized("Authentication required");
+        }
+        try {
+            return UUID.fromString(auth.getName());
+        } catch (Exception e) {
+            throw AppException.unauthorized("Authentication required");
+        }
     }
 }

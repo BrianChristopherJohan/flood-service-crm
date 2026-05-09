@@ -75,7 +75,7 @@ public class AdminUserService {
     // ── Update user ───────────────────────────────────────────────────────────
 
     @Transactional
-    public AdminUserDto updateUser(UUID id, UpdateAdminUserRequest req) {
+    public AdminUserDto updateUser(UUID id, UUID requesterId, UpdateAdminUserRequest req) {
         User user = userRepository.findById(id)
                 .orElseThrow(() -> AppException.notFound("User not found"));
 
@@ -87,10 +87,19 @@ public class AdminUserService {
         }
         if (req.role() != null && !req.role().isBlank()) {
             String newRole = Role.fromString(req.role()).getPersistenceValue();
-            // Guard rail: the default admin's role is immutable. This
-            // protects against the lockout scenario where the only
-            // administrator demotes themselves and can no longer access
-            // /admin/* routes.
+            String currentRole = user.getRole() != null ? user.getRole() : "";
+
+            // Self-modification guard: a user cannot change their own
+            // role. Demoting yourself is the most common way to lock
+            // a tenant out of /admin/* and is never intentional even
+            // when it is — separation of duty says role changes must
+            // come from another admin.
+            if (id.equals(requesterId) && !currentRole.equalsIgnoreCase(newRole)) {
+                throw AppException.forbidden(
+                    "You cannot change your own role. Ask another administrator.");
+            }
+
+            // Default admin invariant — can never be demoted by anyone.
             if (AdminInvariants.isProtectedDefaultAdmin(user.getEmail())
                     && !"admin".equals(newRole)) {
                 throw AppException.forbidden(
@@ -106,9 +115,16 @@ public class AdminUserService {
     // ── Delete user ───────────────────────────────────────────────────────────
 
     @Transactional
-    public void deleteUser(UUID id) {
+    public void deleteUser(UUID id, UUID requesterId) {
         User user = userRepository.findById(id)
                 .orElseThrow(() -> AppException.notFound("User not found"));
+        // Symmetric self-protection — a user can't delete themselves
+        // either, even with admin role. Reduces the chance of an
+        // accidental tenant lockout and keeps audit trails sane.
+        if (id.equals(requesterId)) {
+            throw AppException.forbidden(
+                "You cannot delete your own account from this UI. Ask another administrator.");
+        }
         if (AdminInvariants.isProtectedDefaultAdmin(user.getEmail())) {
             throw AppException.forbidden("The default admin account cannot be deleted.");
         }
