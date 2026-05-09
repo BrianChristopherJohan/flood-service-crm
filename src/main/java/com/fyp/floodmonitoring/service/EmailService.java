@@ -25,10 +25,8 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor
 public class EmailService {
 
-    private final JavaMailSender mailSender;
-
-    @Value("${app.email.from-address}")
-    private String fromAddress;
+    private final JavaMailSender      mailSender;
+    private final EmailSenderResolver senders;
 
     @Value("${app.email.resend-api-key}")
     private String resendApiKey;
@@ -80,7 +78,7 @@ public class EmailService {
 
         try {
             SimpleMailMessage message = new SimpleMailMessage();
-            message.setFrom(fromAddress);
+            message.setFrom(senders.headerFor(EmailSenderResolver.PASSWORD_RESET));
             message.setTo(actualRecipient);
             message.setSubject(subject);
             message.setText(body);
@@ -105,7 +103,7 @@ public class EmailService {
 
         try {
             SimpleMailMessage message = new SimpleMailMessage();
-            message.setFrom(fromAddress);
+            message.setFrom(senders.headerFor(EmailSenderResolver.BROADCAST));
             message.setTo(toEmail);
             message.setSubject("[Flood Alert] " + title);
             message.setText(body + "\n\n— Flood Monitor System");
