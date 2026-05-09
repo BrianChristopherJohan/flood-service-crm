@@ -40,17 +40,14 @@ spring:
       url: ${REDIS_URL:}      # Upstash URL e.g. rediss://default:token@host:6379
       # If REDIS_URL is empty, RedisConfig falls back to ConcurrentMapCache (local dev)
 
-  mail:
-    host: smtp.resend.com
-    port: 465
-    username: resend
-    password: ${RESEND_API_KEY:}   # empty = dev mode, emails logged to console instead
-    properties:
-      mail:
-        smtp:
-          auth: true
-          ssl:
-            enable: true
+  # Spring Mail SMTP path is unused — we send via Resend HTTP API in
+  # ResendHttpClient because Railway blocks outbound port 465. The mail
+  # health indicator is also disabled below to stop /actuator/health
+  # marking the service DOWN with "Couldn't connect to smtp.resend.com:465".
+  autoconfigure:
+    exclude:
+      - org.springframework.boot.autoconfigure.mail.MailSenderAutoConfiguration
+      - org.springframework.boot.autoconfigure.mail.MailSenderValidatorAutoConfiguration
 
   jackson:
     default-property-inclusion: non_null
@@ -76,6 +73,8 @@ management:
       probes:
         enabled: true
   health:
+    mail:
+      enabled: false   # SMTP unused — see spring.autoconfigure.exclude above
     livenessState:
       enabled: true
     readinessState:
