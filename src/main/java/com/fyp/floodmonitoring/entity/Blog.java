@@ -25,8 +25,13 @@ public class Blog {
     @Column(name = "image_key", length = 50)
     private String imageKey;
 
-    /** External image URL. Takes precedence over imageKey when set. */
-    @Column(name = "image_url", length = 500)
+    /**
+     * Hero image. Either a public URL (legacy) or a {@code data:image/...}
+     * URL produced by the CRM uploader (new). Stored as TEXT so a resized
+     * 1280×720 JPEG (~150-300 KB base64) fits comfortably. Takes precedence
+     * over imageKey when set.
+     */
+    @Column(name = "image_url", columnDefinition = "TEXT")
     private String imageUrl;
 
     /** Content category e.g. "Flood Alert", "Safety Tips", "Community", "Updates". */
