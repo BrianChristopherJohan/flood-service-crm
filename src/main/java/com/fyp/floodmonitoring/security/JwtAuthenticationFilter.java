@@ -29,6 +29,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final JwtTokenProvider tokenProvider;
     private final CustomUserDetailsService userDetailsService;
+    private final RevokedTokenStore revokedTokenStore;
 
     @Override
     protected void doFilterInternal(HttpServletRequest request,
@@ -37,6 +38,24 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         try {
             String token = extractToken(request);
             if (StringUtils.hasText(token) && tokenProvider.validateAccessToken(token)) {
+                // Revocation check — must happen AFTER signature
+                // validation but BEFORE we trust any claims from the
+                // token. A revoked jti behaves identically to an
+                // expired token: we don't populate the security
+                // context, so the next authorisation gate returns 401.
+                //
+                // Tokens minted before the jti feature shipped have
+                // no `jti` claim; `getJtiFromAccessToken` returns null
+                // and `isRevoked(null)` returns false. So upgrading
+                // doesn't invalidate in-flight sessions — they age
+                // out naturally as users refresh.
+                String jti = tokenProvider.getJtiFromAccessToken(token);
+                if (revokedTokenStore.isRevoked(jti)) {
+                    log.info("JWT filter — rejecting revoked jti={}", jti);
+                    filterChain.doFilter(request, response);
+                    return;
+                }
+
                 String userId = tokenProvider.getSubjectFromAccessToken(token).toString();
                 UserDetails userDetails = userDetailsService.loadUserByUsername(userId);
 

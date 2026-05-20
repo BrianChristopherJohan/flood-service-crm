@@ -38,6 +38,7 @@ public class AuthService {
     private final JwtTokenProvider           tokenProvider;
     private final PasswordEncoder            passwordEncoder;
     private final EmailService               emailService;
+    private final com.fyp.floodmonitoring.security.RevokedTokenStore revokedTokenStore;
 
     @Value("${app.jwt.refresh-token-expiry-ms}")
     private long refreshTokenExpiryMs;
@@ -84,6 +85,39 @@ public class AuthService {
 
         userRepository.updateLastLogin(user.getId(), Instant.now());
         return buildSession(user);
+    }
+
+    // ── Logout ────────────────────────────────────────────────────────────────
+
+    /**
+     * Server-side revocation of an access token + its paired refresh
+     * token. Called by {@code POST /auth/logout}. See community-side
+     * AuthService.logout() for the full rationale — same shape, same
+     * fail-open semantics on Redis.
+     */
+    @Transactional
+    public void logout(String accessToken, String refreshToken) {
+        if (accessToken != null && !accessToken.isBlank()) {
+            try {
+                String jti = tokenProvider.getJtiFromAccessToken(accessToken);
+                long expEpoch = tokenProvider.getExpirySecondsFromAccessToken(accessToken);
+                long nowEpoch = System.currentTimeMillis() / 1000L;
+                long ttl = expEpoch - nowEpoch;
+                if (jti != null && !jti.isBlank() && ttl > 0) {
+                    revokedTokenStore.revoke(jti, ttl);
+                    log.info("[AuthService.logout] revoked jti={} ttl={}s", jti, ttl);
+                }
+            } catch (Exception e) {
+                log.warn("[AuthService.logout] could not revoke access token: {}", e.getMessage());
+            }
+        }
+        if (refreshToken != null && !refreshToken.isBlank()) {
+            try {
+                refreshTokenRepository.deleteByToken(refreshToken);
+            } catch (Exception e) {
+                log.warn("[AuthService.logout] refresh token cleanup failed: {}", e.getMessage());
+            }
+        }
     }
 
     // ── Refresh token ─────────────────────────────────────────────────────────
