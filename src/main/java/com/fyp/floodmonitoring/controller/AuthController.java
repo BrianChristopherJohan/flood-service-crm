@@ -2,6 +2,7 @@ package com.fyp.floodmonitoring.controller;
 
 import com.fyp.floodmonitoring.dto.request.*;
 import com.fyp.floodmonitoring.dto.response.LoginResponseDto;
+import com.fyp.floodmonitoring.security.ratelimit.RateLimit;
 import com.fyp.floodmonitoring.service.AuthService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -34,17 +35,28 @@ public class AuthController {
 
     private final AuthService authService;
 
+    // Rate limit rationale (per QA Sprint-1 P0-5) — see community-side
+    // AuthController for the long-form explanation. Same numbers across
+    // both services so an attacker can't sidestep one limit by hitting
+    // the other backend. Per-bucket counters are isolated per service
+    // because they're stored on separate Redis instances (the two
+    // services don't share Redis state today; SSO codes are the only
+    // cross-service Redis traffic and live on a different namespace).
+
     @PostMapping("/register")
+    @RateLimit(key = "auth.register", perMinute = 3, perHour = 5, perDay = 30)
     public ResponseEntity<LoginResponseDto> register(@Valid @RequestBody RegisterRequest req) {
         return ResponseEntity.status(HttpStatus.CREATED).body(authService.register(req));
     }
 
     @PostMapping("/login")
+    @RateLimit(key = "auth.login", perMinute = 5, perHour = 10)
     public ResponseEntity<LoginResponseDto> login(@Valid @RequestBody LoginRequest req) {
         return ResponseEntity.ok(authService.login(req));
     }
 
     @PostMapping("/refresh")
+    @RateLimit(key = "auth.refresh", perMinute = 30, perHour = 200)
     public ResponseEntity<Map<String, String>> refresh(@RequestBody Map<String, String> body) {
         String refreshToken = body.get("refreshToken");
         if (refreshToken == null || refreshToken.isBlank()) {
@@ -56,6 +68,7 @@ public class AuthController {
     }
 
     @PostMapping("/forgot-password")
+    @RateLimit(key = "auth.forgotPassword", perMinute = 1, perHour = 5, perDay = 20)
     public ResponseEntity<Map<String, String>> forgotPassword(
             @Valid @RequestBody ForgotPasswordRequest req) {
 
@@ -71,6 +84,7 @@ public class AuthController {
     }
 
     @PostMapping("/verify-reset-code")
+    @RateLimit(key = "auth.verifyResetCode", perMinute = 5, perHour = 10)
     public ResponseEntity<Map<String, String>> verifyResetCode(
             @Valid @RequestBody VerifyResetCodeRequest req) {
 
@@ -79,6 +93,7 @@ public class AuthController {
     }
 
     @PostMapping("/reset-password")
+    @RateLimit(key = "auth.resetPassword", perMinute = 3, perHour = 5)
     public ResponseEntity<Map<String, String>> resetPassword(
             @Valid @RequestBody ResetPasswordRequest req) {
 
@@ -92,6 +107,7 @@ public class AuthController {
      * Unlike /reset-password, no email reset code is needed.
      */
     @PostMapping("/change-password")
+    @RateLimit(key = "auth.changePassword", perMinute = 3, perHour = 10)
     public ResponseEntity<Map<String, String>> changePassword(
             @AuthenticationPrincipal UserDetails principal,
             @Valid @RequestBody ChangePasswordRequest req) {
