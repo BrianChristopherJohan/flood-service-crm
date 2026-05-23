@@ -1,34 +1,24 @@
 @echo off
-REM ─────────────────────────────────────────────────────────────────────────────
-REM  Flood Monitoring Java Backend — Windows Startup Script
-REM
-REM  BEFORE RUNNING:
-REM    1. Fill in DATABASE_URL below with your Neon JDBC connection string
-REM       (see neon.tech → your project → Connection Details → JDBC)
-REM    2. Java 17+ must be installed  (java -version to check)
-REM    3. Internet access required on first run to download Maven
-REM
-REM  NEON JDBC FORMAT:
-REM    jdbc:postgresql://HOST/DBNAME?sslmode=require&user=USER&password=PASS
-REM ─────────────────────────────────────────────────────────────────────────────
+setlocal
 
-REM ── DATABASE CONNECTION — use your Neon JDBC string (never commit real values) ─
-REM Example: jdbc:postgresql://HOST/neondb?sslmode=require^&channel_binding=require^&user=USER^&password=PASSWORD
-SET DATABASE_URL=jdbc:postgresql://YOUR_NEON_HOST/neondb?sslmode=require^&channel_binding=require^&user=neondb_owner^&password=YOUR_PASSWORD
-REM ─────────────────────────────────────────────────────────────────────────────
+REM Flood CRM Service - local Windows launcher.
+REM Values are loaded by Spring Boot from .env via spring-dotenv.
+REM Do not hardcode secrets here.
 
-SET JWT_SECRET=replace_with_hex_secret_same_as_community_service
-SET JWT_REFRESH_SECRET=replace_with_second_distinct_hex_secret
-SET PORT=4002
-SET NODE_ENV=development
+cd /d "%~dp0"
+
+if not exist ".env" (
+  echo.
+  echo Missing .env file.
+  echo Create D:\floodstuff\flood-service-crm\.env before starting this service.
+  echo.
+  exit /b 1
+)
 
 echo.
-echo  ╔══════════════════════════════════════════════╗
-echo  ║   Flood CRM Service                          ║
-echo  ║   Spring Boot 3.2  ·  Java 17+               ║
-echo  ╚══════════════════════════════════════════════╝
-echo  Starting on http://localhost:%PORT%
-echo  Press Ctrl+C to stop
+echo Flood CRM Service
+echo Starting on http://localhost:4002
+echo Press Ctrl+C to stop
 echo.
 
-call mvnw.cmd spring-boot:run -Dmaven.test.skip=true
+call "%~dp0mvnw.cmd" spring-boot:run "-Dmaven.test.skip=true"

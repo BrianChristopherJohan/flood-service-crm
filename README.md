@@ -102,6 +102,24 @@ PORT=4002
 
 ### 3. Run the application
 
+On Windows PowerShell, use the local launcher:
+
+```powershell
+.\run.bat
+```
+
+Or run Maven directly:
+
+```powershell
+.\mvnw.cmd spring-boot:run "-Dmaven.test.skip=true"
+```
+
+PowerShell does not run commands from the current directory unless you prefix
+them with `.\`. Quoting the `-D...` flag also prevents Maven from receiving a
+broken `.test.skip=true` argument.
+
+On macOS / Linux / Git Bash:
+
 ```bash
 ./mvnw spring-boot:run
 ```
