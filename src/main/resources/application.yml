@@ -35,11 +35,6 @@ spring:
         jdbc:
           time_zone: UTC
 
-  data:
-    redis:
-      url: ${REDIS_URL:}      # Upstash URL e.g. rediss://default:token@host:6379
-      # If REDIS_URL is empty, RedisConfig falls back to ConcurrentMapCache (local dev)
-
   # Spring Mail SMTP path is unused — we send via Resend HTTP API in
   # ResendHttpClient because Railway blocks outbound port 465. The mail
   # health indicator is also disabled below to stop /actuator/health
@@ -48,6 +43,10 @@ spring:
     exclude:
       - org.springframework.boot.autoconfigure.mail.MailSenderAutoConfiguration
       - org.springframework.boot.autoconfigure.mail.MailSenderValidatorAutoConfiguration
+      - org.springframework.boot.autoconfigure.data.redis.RedisAutoConfiguration
+      - org.springframework.boot.autoconfigure.data.redis.RedisRepositoriesAutoConfiguration
+      - org.springframework.boot.actuate.autoconfigure.data.redis.RedisHealthContributorAutoConfiguration
+      - org.springframework.boot.actuate.autoconfigure.data.redis.RedisReactiveHealthContributorAutoConfiguration
 
   jackson:
     default-property-inclusion: non_null
