@@ -22,7 +22,7 @@ import java.time.Duration;
 /**
  * Cache configuration.
  *
- * When REDIS_URL is set  → uses Redis (Upstash free tier: 500K commands/month).
+ * When REDIS_URL is set  → uses Redis (Railway Redis plugin).
  * When REDIS_URL is absent → falls back to in-memory ConcurrentMapCache for local dev.
  *
  * Cache names and TTLs:

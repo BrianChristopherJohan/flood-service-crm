@@ -37,7 +37,7 @@ spring:
 
   data:
     redis:
-      url: ${REDIS_URL:}      # Upstash URL e.g. rediss://default:token@host:6379
+      url: ${REDIS_URL:}      # Railway Redis URL e.g. rediss://default:password@host:6379
       # If REDIS_URL is empty, RedisConfig falls back to ConcurrentMapCache (local dev)
 
   # Spring Mail SMTP path is unused — we send via Resend HTTP API in

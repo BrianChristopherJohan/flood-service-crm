@@ -3,7 +3,7 @@
 ![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.2-6DB33F?logo=springboot&logoColor=white)
 ![Java](https://img.shields.io/badge/Java-17-007396?logo=java&logoColor=white)
 ![PostgreSQL](https://img.shields.io/badge/PostgreSQL-Neon-4169E1?logo=postgresql&logoColor=white)
-![Redis](https://img.shields.io/badge/Redis-Upstash-DC382D?logo=redis&logoColor=white)
+![Redis](https://img.shields.io/badge/Redis-Railway-DC382D?logo=redis&logoColor=white)
 ![JWT](https://img.shields.io/badge/Auth-JWT-black?logo=jsonwebtokens)
 ![License](https://img.shields.io/badge/license-MIT-blue)
 
@@ -45,7 +45,7 @@
 | Java              | 17      | Runtime                            |
 | Spring Security   | 6.x     | JWT authentication & authorization |
 | PostgreSQL (Neon) | 15      | Primary relational database        |
-| Redis (Upstash)   | 7.x     | Token blacklist, caching           |
+| Redis (Railway)   | 7.x     | Token blacklist, caching           |
 | Maven             | 3.9     | Build tool                         |
 | JUnit 5           | 5.x     | Unit & integration testing         |
 | Lombok            | 1.18    | Boilerplate reduction              |
@@ -61,7 +61,7 @@ flood-website-crm (Next.js :3000)
 flood-service-crm (Spring Boot :4002)
          │
          ├── PostgreSQL (Neon) — persistent data
-         └── Redis (Upstash)   — token store, cache
+         └── Redis (Railway)   — token store, cache
 ```
 
 ---
@@ -71,7 +71,7 @@ flood-service-crm (Spring Boot :4002)
 - Java 17+
 - Maven 3.9+
 - PostgreSQL database (Neon cloud or local)
-- Redis instance (Upstash cloud or local)
+- Redis instance (Railway Redis in production, or local)
 
 ---
 
