@@ -62,7 +62,8 @@ jobs:
             if [ -n "${GHCR_TOKEN:-}" ]; then
               echo "$GHCR_TOKEN" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
             fi
-            FILES="-f docker-compose.yml -f docker-compose.monitoring.yml -f docker-compose.staging.yml"
-            docker compose $FILES pull community-api crm-api
-            docker compose $FILES up -d
+            # Single self-contained staging compose lives on the box (Neon-backed).
+            # Redeploy ONLY this service so we don't disturb community-api / kong / monitoring.
+            docker compose pull crm-api
+            docker compose up -d --no-deps crm-api
             docker image prune -f
