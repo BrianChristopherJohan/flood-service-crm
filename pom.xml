@@ -108,6 +108,16 @@
       <artifactId>spring-boot-starter-actuator</artifactId>
     </dependency>
 
+    <!-- ── Prometheus metrics (Micrometer) ───────────────────────── -->
+    <!-- Exposes /actuator/prometheus for the staging Prometheus scraper
+         (see deploy/monitoring/prometheus.yml). Version is managed by the
+         Spring Boot parent. -->
+    <dependency>
+      <groupId>io.micrometer</groupId>
+      <artifactId>micrometer-registry-prometheus</artifactId>
+      <scope>runtime</scope>
+    </dependency>
+
     <!-- ── Test ──────────────────────────────────────────────────── -->
     <dependency>
       <groupId>org.springframework.boot</groupId>
