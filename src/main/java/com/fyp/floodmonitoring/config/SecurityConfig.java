@@ -66,7 +66,7 @@ public class SecurityConfig {
                     "/community/posts/**",
                     "/community/groups",
                     "/community/groups/**").permitAll()  // public read
-                .requestMatchers("/actuator/health/**").permitAll()
+                .requestMatchers("/actuator/health/**", "/actuator/prometheus", "/actuator/info").permitAll()
                 .anyRequest().authenticated()
             )
 
