@@ -21,4 +21,12 @@ public interface RefreshTokenRepository extends JpaRepository<RefreshToken, UUID
     @Modifying
     @Query("DELETE FROM RefreshToken rt WHERE rt.userId = :userId")
     void deleteAllByUserId(UUID userId);
+
+    /**
+     * Idempotent single-token delete used by the logout flow.
+     * Returns the number of rows deleted (0 or 1).
+     */
+    @Modifying
+    @Query("DELETE FROM RefreshToken rt WHERE rt.token = :token")
+    int deleteByToken(String token);
 }

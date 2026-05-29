@@ -1,0 +1,69 @@
+name: Deploy to AWS staging
+
+# Brief §6.2 / §2.2.1: the `staging` branch deploys to the AWS EC2 staging host.
+# Build the service image, push it to GHCR, then SSH into the EC2 and roll the
+# Docker Compose stack. A push to `staging` updates ONLY the AWS instance
+# (production on Railway/Vercel tracks `main`).
+on:
+  push:
+    branches: [staging]
+  workflow_dispatch:
+
+concurrency:
+  group: staging-deploy-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: true
+          tags: |
+            ghcr.io/${{ github.repository }}:staging
+            ghcr.io/${{ github.repository }}:${{ github.sha }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Redeploy on the AWS EC2 staging host
+        uses: appleboy/ssh-action@v1
+        env:
+          GHCR_TOKEN: ${{ secrets.GHCR_TOKEN }}
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          envs: GHCR_TOKEN
+          script: |
+            set -euo pipefail
+            cd /opt/floodwatch-staging
+            # GHCR login is only required if the image package is private.
+            # Skipped automatically when the GHCR_TOKEN secret is unset.
+            if [ -n "${GHCR_TOKEN:-}" ]; then
+              echo "$GHCR_TOKEN" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+            fi
+            # Single self-contained staging compose lives on the box (Neon-backed).
+            # Redeploy ONLY this service so we don't disturb community-api / kong / monitoring.
+            docker compose pull crm-api
+            docker compose up -d --no-deps crm-api
+            docker image prune -f

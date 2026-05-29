@@ -39,7 +39,13 @@ public class JwtTokenProvider {
 
     public String createAccessToken(UUID userId, String email, String persistedRole) {
         String roleClaim = Role.fromString(persistedRole).name();
+        // jti — unique per-token identifier so we can revoke a SINGLE
+        // access token (e.g. on logout) without rotating the signing
+        // secret. RevokedTokenStore + JwtAuthenticationFilter consume
+        // this claim; pre-revocation tokens are unaffected because the
+        // store treats "jti not in set" as "not revoked".
         return Jwts.builder()
+                .id(UUID.randomUUID().toString())
                 .subject(userId.toString())
                 .claim("email", email)
                 .claim("role", roleClaim)
@@ -103,6 +109,27 @@ public class JwtTokenProvider {
 
     public String getRoleFromAccessToken(String token) {
         return parseClaims(token, jwtSecret).get("role", String.class);
+    }
+
+    /**
+     * Returns the {@code jti} (JWT ID) claim — a per-token UUID minted
+     * in {@link #createAccessToken}. Null only for pre-revocation
+     * tokens issued before this commit. Used by
+     * {@code RevokedTokenStore} to key one-shot revocations.
+     */
+    public String getJtiFromAccessToken(String token) {
+        return parseClaims(token, jwtSecret).getId();
+    }
+
+    /**
+     * Returns the token's expiry as epoch seconds. Used by the logout
+     * endpoint to compute the Redis TTL for the revocation entry —
+     * there's no point keeping the jti past its natural expiry, the
+     * signature check would have rejected it anyway.
+     */
+    public long getExpirySecondsFromAccessToken(String token) {
+        Date exp = parseClaims(token, jwtSecret).getExpiration();
+        return exp == null ? 0L : exp.toInstant().getEpochSecond();
     }
 
     // ── Private helpers ───────────────────────────────────────────────────────

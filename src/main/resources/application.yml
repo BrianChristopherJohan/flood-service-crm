@@ -35,6 +35,11 @@ spring:
         jdbc:
           time_zone: UTC
 
+  data:
+    redis:
+      url: ${REDIS_URL:}      # Railway Redis URL e.g. rediss://default:password@host:6379
+      # If REDIS_URL is empty, RedisConfig falls back to ConcurrentMapCache (local dev)
+
   # Spring Mail SMTP path is unused — we send via Resend HTTP API in
   # ResendHttpClient because Railway blocks outbound port 465. The mail
   # health indicator is also disabled below to stop /actuator/health
@@ -65,7 +70,7 @@ management:
   endpoints:
     web:
       exposure:
-        include: health
+        include: health,info,prometheus
   endpoint:
     health:
       show-details: always

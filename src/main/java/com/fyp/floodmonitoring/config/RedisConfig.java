@@ -27,8 +27,15 @@ import java.time.Duration;
 /**
  * Cache configuration.
  *
- * When REDIS_URL is set, uses Redis.
- * When REDIS_URL is absent or blank, uses in-memory cache for local dev.
+ * When REDIS_URL is set  → uses Redis (Railway Redis plugin).
+ * When REDIS_URL is absent → falls back to in-memory ConcurrentMapCache for local dev.
+ *
+ * Cache names and TTLs:
+ *   "analytics"   — 5 minutes  (expensive aggregation queries on 200k+ events)
+ *   "sensors"     — 30 seconds (sensor list, changes on ingest)
+ *   "blogs"       — 60 minutes (static content, rarely changes)
+ *   "dashboard"   — 1 minute
+ *   "safety"      — 60 minutes (seeded text, rarely changes)
  */
 @Slf4j
 @Configuration

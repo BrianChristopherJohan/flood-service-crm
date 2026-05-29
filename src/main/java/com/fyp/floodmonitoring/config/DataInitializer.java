@@ -83,6 +83,12 @@ public class DataInitializer implements CommandLineRunner {
                     return;
                 }
                 User admin = User.builder()
+                        // Deterministic UUIDv5(email) so this CRM admin
+                        // shares the SAME id as the community admin
+                        // with the same email — critical for cross-
+                        // service SSO. See UserIdGenerator for the
+                        // post-mortem on the drift bug this prevents.
+                        .id(UserIdGenerator.forEmail(email))
                         .firstName(seedFirstName.trim())
                         .lastName(seedLastName.trim())
                         .email(email)
@@ -90,7 +96,8 @@ public class DataInitializer implements CommandLineRunner {
                         .role("admin")
                         .build();
                 userRepository.save(admin);
-                log.info("[DataInitializer] Created default admin {}", email);
+                log.info("[DataInitializer] Created default admin {} with id={}",
+                        email, admin.getId());
             }
         );
     }
@@ -113,6 +120,12 @@ public class DataInitializer implements CommandLineRunner {
             },
             () -> {
                 User admin = User.builder()
+                        // Same UUIDv5(email) derivation as the default
+                        // admin above — every admin row in this DB has
+                        // a deterministic id derived from its email,
+                        // matching what the community service + the
+                        // seeder produce for the same input.
+                        .id(UserIdGenerator.forEmail(email))
                         .firstName(seedFirstName.trim())
                         .lastName(seedLastName.trim())
                         .email(email)
@@ -120,7 +133,8 @@ public class DataInitializer implements CommandLineRunner {
                         .role("admin")
                         .build();
                 userRepository.save(admin);
-                log.info("[DataInitializer] Created extra admin {}", email);
+                log.info("[DataInitializer] Created extra admin {} with id={}",
+                        email, admin.getId());
             }
         );
     }
