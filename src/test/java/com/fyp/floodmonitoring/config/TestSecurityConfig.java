@@ -1,8 +1,11 @@
 package com.fyp.floodmonitoring.config;
 
 import jakarta.servlet.http.HttpServletResponse;
+import com.fyp.floodmonitoring.security.ratelimit.RateLimiter;
 import org.springframework.boot.test.context.TestConfiguration;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.context.annotation.Bean;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -10,6 +13,8 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
+
+import java.util.List;
 
 /**
  * Slimmed-down security configuration for {@code @WebMvcTest} controller tests.
@@ -33,6 +38,16 @@ import org.springframework.security.web.SecurityFilterChain;
 @EnableWebSecurity
 @EnableMethodSecurity
 public class TestSecurityConfig {
+
+    @Bean
+    public RateLimiter rateLimiter(ObjectProvider<StringRedisTemplate> redisProvider) {
+        return new RateLimiter(redisProvider) {
+            @Override
+            public Decision check(String bucketName, String userKey, List<Window> windows) {
+                return new Decision(true, 0);
+            }
+        };
+    }
 
     @Bean
     public SecurityFilterChain testFilterChain(HttpSecurity http) throws Exception {

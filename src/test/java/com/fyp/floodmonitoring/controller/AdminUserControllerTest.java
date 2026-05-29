@@ -42,6 +42,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @DisplayName("AdminUserController Tests")
 class AdminUserControllerTest {
 
+    private static final String ADMIN_USER_ID = "11111111-1111-1111-1111-111111111111";
+
     @Autowired private MockMvc mockMvc;
     @Autowired private ObjectMapper objectMapper;
     @MockBean  private AdminUserService adminUserService;
@@ -66,7 +68,7 @@ class AdminUserControllerTest {
     class ListUsers {
 
         @Test
-        @WithMockUser(roles = "ADMIN")
+        @WithMockUser(username = ADMIN_USER_ID, roles = "ADMIN")
         @DisplayName("returns 200 with all users for admin")
         void listUsers_Admin_Returns200() throws Exception {
             when(adminUserService.listAllUsers()).thenReturn(List.of(sampleAdmin, sampleCustomer));
@@ -101,7 +103,7 @@ class AdminUserControllerTest {
     class CreateUser {
 
         @Test
-        @WithMockUser(roles = "ADMIN")
+        @WithMockUser(username = ADMIN_USER_ID, roles = "ADMIN")
         @DisplayName("returns 200 with created user for admin")
         void createUser_Admin_Returns200() throws Exception {
             when(adminUserService.createUser(any())).thenReturn(sampleCustomer);
@@ -140,7 +142,7 @@ class AdminUserControllerTest {
     class UpdateUser {
 
         @Test
-        @WithMockUser(roles = "ADMIN")
+        @WithMockUser(username = ADMIN_USER_ID, roles = "ADMIN")
         @DisplayName("returns 200 with updated user")
         void updateUser_Admin_Returns200() throws Exception {
             UUID userId = UUID.randomUUID();
@@ -166,7 +168,7 @@ class AdminUserControllerTest {
     class DeleteUser {
 
         @Test
-        @WithMockUser(roles = "ADMIN")
+        @WithMockUser(username = ADMIN_USER_ID, roles = "ADMIN")
         @DisplayName("returns 204 on successful delete")
         void deleteUser_Admin_Returns204() throws Exception {
             UUID userId = UUID.randomUUID();

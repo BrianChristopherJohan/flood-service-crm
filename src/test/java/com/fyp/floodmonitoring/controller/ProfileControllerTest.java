@@ -223,9 +223,9 @@ class ProfileControllerTest {
 
         @Test
         @WithMockUser(username = USER_ID)
-        @DisplayName("returns 400 when avatarUrl exceeds 2048 characters")
+        @DisplayName("returns 400 when avatarUrl exceeds 200000 characters")
         void updateProfile_AvatarUrlTooLong_Returns400() throws Exception {
-            String longUrl = "https://example.com/" + "x".repeat(2048);
+            String longUrl = "https://example.com/" + "x".repeat(200_000);
             UpdateProfileRequest req = new UpdateProfileRequest(
                     null, null, null, null, longUrl
             );
